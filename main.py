@@ -5,6 +5,7 @@ import sys
 
 def main():
     try:
+        send_email(message=f'{sys.argv[1]} spider is launching.')
         SpiderClass = SPIDER_FACTORY[sys.argv[1]]
         order_factory(SpiderClass)(SpiderClass)
     except Exception as e:

@@ -6,15 +6,15 @@ from SpiderProject.SpiderProject.settings import CUSTOM_CONFIG
 
 SPIDER_FACTORY = {'flight': FlightSpider, 'mask': MaskSpider, 'uber': UberSpider}
 
-def order_factory(spider_class):
-    if spider_class == FlightSpider:
+def order_factory(Spiderclass):
+    if Spiderclass == FlightSpider:
         return run_flight_spider
-    elif spider_class == MaskSpider:
+    elif Spiderclass == MaskSpider:
         return run_mask_spider
-    elif spider_class == UberSpider:
+    elif Spiderclass == UberSpider:
         return run_uber_spider
     else:
-        raise ValueError('Unrecognized spider class.')
+        raise ValueError('Invalid spider class.')
 
 def run_flight_spider(FlightSpider):
     process = CrawlerProcess(settings={
