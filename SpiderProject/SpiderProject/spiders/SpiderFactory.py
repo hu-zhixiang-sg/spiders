@@ -34,7 +34,7 @@ def run_mask_spider(MaskSpider):
         'AUTOTHROTTLE_ENABLED': True,
         'AUTOTHROTTLE_START_DELAY': 5,
         'AUTOTHROTTLE_MAX_DELAY': 60,
-        'AUTOTHROTTLE_TARGET_CONCURRENCY': 2,
+        'AUTOTHROTTLE_TARGET_CONCURRENCY': 6,
         'AUTOTHROTTLE_DEBUG': True,
         'ITEM_PIPELINES': {'SpiderProject.SpiderProject.pipelines.MaskSpiderPipline': 100,
                            'SpiderProject.SpiderProject.pipelines.FlightSpiderPipline': 200,

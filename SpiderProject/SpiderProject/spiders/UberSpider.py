@@ -6,6 +6,7 @@ from SpiderProject.SpiderProject.items import UberSpiderItem
 from SpiderProject.SpiderProject.settings import CUSTOM_CONFIG
 from datetime import datetime
 from utils.utils import send_email
+import traceback
 
 
 class UberSpider(scrapy.Spider):
@@ -49,7 +50,7 @@ class UberSpider(scrapy.Spider):
                     'WAV': float(self.driver.find_element_by_xpath('//*[@id="main"]/div[2]/div/div/div/div[1]/div[3]/div[2]/div[3]/div[1]/div/span').text[1:])
                 })
             except Exception as e:
-                print(e.__traceback__)
+                print(''.join(traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)))
                 send_email('uber')
 
         uberSpiderItem = UberSpiderItem()

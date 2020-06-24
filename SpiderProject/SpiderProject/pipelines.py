@@ -5,6 +5,7 @@ from sqlalchemy.orm import sessionmaker
 from database.db_config import FlightSpiderTable, MaskSpiderTable, UberSpiderTable
 from SpiderProject.SpiderProject.settings import CUSTOM_CONFIG
 import pandas as pd
+import traceback
 
 
 class FlightSpiderPipline:
@@ -15,19 +16,16 @@ class FlightSpiderPipline:
         self.session = Session()
 
     def process_item(self, item, spider):
-        df_table = pd.DataFrame([vars(record) for record in self.session.query(FlightSpiderTable).all()])
-
         df = pd.read_csv(item['file_path'])
         df.columns = ['date', 'moving_average', 'num_flights']
         df['InsertedByUser'] = CUSTOM_CONFIG['PC_USERNAME']
         df['InsertedTimeStamp'] = datetime.now()
 
-        if not df_table.empty:
-            df_table['date'] = pd.to_datetime(df_table['date'], format='%Y-%m-%d')
-            df['date'] = pd.to_datetime(df['date'], format='%Y-%m-%d')
-            df = df.merge(
-                df_table, on='date', how='left', indicator=True, suffixes=('', '_r')
-            ).loc[lambda x: x['_merge'] == 'left_only'][df.columns]
+        if self.session.query(FlightSpiderTable).first():
+            self.session.query(FlightSpiderTable).filter(
+                (FlightSpiderTable.date >= datetime.strptime(df.date.values[0], '%Y-%m-%d')) &
+                (FlightSpiderTable.date <= datetime.strptime(df.date.values[-1], '%Y-%m-%d'))
+            ).delete()
 
         for record in df.to_dict(orient='records'):
             self.session.add(FlightSpiderTable(**record))
@@ -38,7 +36,7 @@ class FlightSpiderPipline:
             self.session.commit()
         except Exception as e:
             self.session.rollback()
-            print(e.__traceback__)
+            print(''.join(traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)))
         self.session.close()
         self.engine.dispose()
 
@@ -49,22 +47,24 @@ class MaskSpiderPipline:
         Session = sessionmaker()
         Session.configure(bind=self.engine)
         self.session = Session()
-        self.now = datetime.now()
-        self.mask_record = {self.now: 0}
+        self.mask_record = 0
 
     def process_item(self, item, spider):
-        self.mask_record[self.now] += item['mask_count']
+        self.mask_record += item['mask_count']
         raise DropItem()
 
     def close_spider(self, spider):
-        self.mask_record['InsertedByUser'] = CUSTOM_CONFIG['PC_USERNAME']
-        self.mask_record['InsertedTimeStamp'] = datetime.now()
-        self.session.add(MaskSpiderTable(**self.mask_record))
+        self.today_record = {}
+        self.today_record['date'] = datetime.strptime(str(datetime.now().date()), '%Y-%m-%d')
+        self.today_record['mask_count'] = self.mask_record
+        self.today_record['InsertedByUser'] = CUSTOM_CONFIG['PC_USERNAME']
+        self.today_record['InsertedTimeStamp'] = datetime.now()
+        self.session.add(MaskSpiderTable(**self.today_record))
         try:
             self.session.commit()
         except Exception as e:
             self.session.rollback()
-            print(e.__traceback__)
+            print(''.join(traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)))
         self.session.close()
         self.engine.dispose()
 
@@ -88,6 +88,6 @@ class UberSpiderPipline:
             self.session.commit()
         except Exception as e:
             self.session.rollback()
-            print(e.__traceback__)
+            print(''.join(traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__)))
         self.session.close()
         self.engine.dispose()

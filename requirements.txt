@@ -5,3 +5,5 @@ scrapy_selenium
 sqlalchemy
 pyodbc
 pandas
+scrapy-fake-useragent
+pyopenssl
